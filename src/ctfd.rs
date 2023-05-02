@@ -37,7 +37,7 @@ pub struct Challenge {
 
 impl Ctfd {
     pub async fn get_challs(&self) -> Result<Vec<ChallengeBrief>, Error> {
-        let url = format!("{base}/api/v1/challenges", base = self.base_url);
+        let url = self.base_url.join("/api/v1/challenges").unwrap();
 
         let resp = self
             .client
@@ -57,7 +57,10 @@ impl Ctfd {
     }
 
     pub async fn get_chall(&self, id: i32) -> Result<Challenge, Error> {
-        let url = format!("{base}/api/v1/challenges/{id}", base = self.base_url);
+        let url = self
+            .base_url
+            .join(&format!("/api/v1/challenges/{id}"))
+            .unwrap();
 
         let resp = self
             .client

@@ -5,7 +5,6 @@ use argh::FromArgs;
 use reqwest::{self};
 use reqwest::{Error, Url};
 
-
 pub mod ctfd;
 
 #[derive(FromArgs, Debug)]
