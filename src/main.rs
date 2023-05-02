@@ -129,7 +129,8 @@ async fn main() -> Result<(), Error> {
 
                 if input.trim() == "y" {
                     std::fs::create_dir_all(&out_path).unwrap();
-                } else { // default: no
+                } else {
+                    // default: no
                     println!("Skipping");
                     continue;
                 }
