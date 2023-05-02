@@ -44,14 +44,20 @@ async fn main() -> Result<(), Error> {
         out_path,
     } = argh::from_env();
 
+    // make sure we have a trailling slash, otherwise path is ignored: /asdf/blah + /endpoint => /endpoint
+    // instead, have trailing slash and dont use prefixed slash: /asdf/blah/ + endpoint = /asdf/blah/endpoint
+    let url: Url = {
+        if url.as_str().ends_with('/') {
+            url
+        } else {
+            (url.as_str().to_owned() + "/").parse().unwrap()
+        }
+    };
+
     let client = reqwest::Client::new();
     let ctf = ctfd::Ctfd::new(client.clone(), url.clone(), format!("session={};", session));
 
     let tasks = ctf.all_tasks().await?;
-
-    for t in &tasks {
-        dbg!(t);
-    }
 
     // make sure path exists
     if !out_path.exists() {
