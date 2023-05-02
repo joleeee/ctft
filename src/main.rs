@@ -28,12 +28,18 @@ struct Args {
 pub struct Task<ID> {
     /// a unique id for this challenge
     /// used to correlate consequtive rusn
-    id: ID,
+    _id: ID,
     /// name of the challenge
     /// used to make a folder for the challenge
     name: String,
     /// related downloads
     downloads: Vec<String>,
+}
+
+fn read_line_lower() -> String {
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input).unwrap();
+    input.trim().to_ascii_lowercase()
 }
 
 #[tokio::main]
@@ -67,9 +73,8 @@ async fn main() -> Result<(), Error> {
         );
 
         // read y or n
-        let mut input = String::new();
-        std::io::stdin().read_line(&mut input).unwrap();
-        if input.trim() == "y" || input.trim() == "" {
+        let answer = read_line_lower();
+        if answer == "y" || answer == "" {
             std::fs::create_dir_all(&out_path).unwrap();
         } else {
             println!("Exiting...");
@@ -85,11 +90,8 @@ async fn main() -> Result<(), Error> {
         );
 
         // read y or n
-        let mut input = String::new();
-        std::io::stdin().read_line(&mut input).unwrap();
-        if input.trim() == "y" || input.trim() == "" {
-            // okay
-        } else {
+        let answer = read_line_lower();
+        if answer != "y" && answer != "" {
             println!("Exiting...");
             return Ok(());
         }
@@ -130,10 +132,8 @@ async fn main() -> Result<(), Error> {
                     file_path.display()
                 );
 
-                let mut input = String::new();
-                std::io::stdin().read_line(&mut input).unwrap();
-
-                if input.trim() == "y" {
+                let answer = read_line_lower();
+                if answer == "y" {
                     std::fs::create_dir_all(&out_path).unwrap();
                 } else {
                     // default: no

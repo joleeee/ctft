@@ -92,7 +92,7 @@ impl Ctfd {
             let chal = self.get_chall(id).await?;
             assert_eq!(id, chal.id);
             tasks.push(Task {
-                id: chal.id,
+                _id: chal.id,
                 name: chal.name,
                 downloads: chal.files,
             });
