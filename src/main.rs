@@ -2,6 +2,7 @@ use std::io::Cursor;
 use std::path::PathBuf;
 
 use argh::FromArgs;
+use ctfd::Ctfd;
 use reqwest::{self};
 use reqwest::{Error, Url};
 
@@ -61,7 +62,7 @@ async fn main() -> Result<(), Error> {
     };
 
     let client = reqwest::Client::new();
-    let ctf = ctfd::Ctfd::new(client.clone(), url.clone(), format!("session={};", session));
+    let ctf = Ctfd::new(client.clone(), url.clone(), format!("session={};", session));
 
     let tasks = ctf.all_tasks().await?;
 
@@ -74,7 +75,7 @@ async fn main() -> Result<(), Error> {
 
         // read y or n
         let answer = read_line_lower();
-        if answer == "y" || answer == "" {
+        if answer == "y" || answer.is_empty() {
             std::fs::create_dir_all(&out_path).unwrap();
         } else {
             println!("Exiting...");
@@ -91,7 +92,7 @@ async fn main() -> Result<(), Error> {
 
         // read y or n
         let answer = read_line_lower();
-        if answer != "y" && answer != "" {
+        if answer != "y" && !answer.is_empty() {
             println!("Exiting...");
             return Ok(());
         }
