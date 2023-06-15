@@ -141,8 +141,6 @@ impl Ctfd {
         &self,
         briefs: &[ChallengeBrief],
     ) -> Result<Vec<Task<i32>>, CtfdError> {
-        let chal_ids = briefs.iter().map(|v| v.id).collect::<Vec<_>>();
-
         let challenges = self.full_challs(briefs).await?;
 
         let mut tasks = Vec::new();

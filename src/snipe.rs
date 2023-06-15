@@ -1,7 +1,7 @@
 use crate::ctfd::{Challenge, ChallengeBrief, Ctfd};
 use argh::FromArgs;
 use chrono::{DateTime, Utc};
-use color_eyre::{eyre, eyre::eyre, Report};
+use color_eyre::{eyre::eyre, Report};
 
 #[derive(FromArgs, Debug)]
 #[argh(subcommand, name = "snipe", description = "snipe a challenge")]
