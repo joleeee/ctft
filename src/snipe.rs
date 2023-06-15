@@ -6,6 +6,10 @@ use color_eyre::{eyre::eyre, Report};
 #[derive(FromArgs, Debug)]
 #[argh(subcommand, name = "snipe", description = "snipe a challenge")]
 pub struct Snipe {
+    #[argh(option, long = "csrf")]
+    /// csrf token required for submitting flags
+    csrf_token: String,
+
     #[argh(option, long = "flag")]
     /// the flag to submit
     flag: String,
@@ -106,8 +110,14 @@ impl Snipe {
         Ok(matching_body)
     }
 
-    pub async fn submit(&self, id: i32) -> Result<(), Report> {
-        todo!();
+    pub async fn submit(&self, ctf: &Ctfd, id: i32) -> Result<(), Report> {
+        let res = ctf
+            .submit_flag(self.flag.clone(), id, &self.csrf_token)
+            .await?;
+
+        dbg!(&res);
+
+        Ok(())
     }
 
     pub async fn run(&self, ctf: &Ctfd) -> Result<(), Report> {
@@ -129,7 +139,7 @@ impl Snipe {
         match title_matches.len() {
             0 => {}
             1 => {
-                self.submit(title_matches[0].id).await?;
+                self.submit(ctf, title_matches[0].id).await?;
                 return Ok(());
             }
             _ => {
@@ -150,7 +160,7 @@ impl Snipe {
         match body_title_matches.len() {
             0 => {}
             1 => {
-                self.submit(body_title_matches[0].id).await?;
+                self.submit(ctf, body_title_matches[0].id).await?;
                 return Ok(());
             }
             _ => {
@@ -165,7 +175,7 @@ impl Snipe {
         match body_matches.len() {
             0 => {}
             1 => {
-                self.submit(body_matches[0].id).await?;
+                self.submit(ctf, body_matches[0].id).await?;
                 return Ok(());
             }
             _ => {

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt;
 
 use reqwest::Url;
@@ -78,6 +79,12 @@ pub struct Challenge {
     pub files: Vec<String>,
 }
 
+#[derive(Deserialize, Debug, Clone)]
+pub struct SubmitResult {
+    message: String,
+    status: String,
+}
+
 impl Ctfd {
     pub async fn get_challs(&self) -> Result<Vec<ChallengeBrief>, CtfdError> {
         let url = self.base_url.join("api/v1/challenges").unwrap();
@@ -112,7 +119,7 @@ impl Ctfd {
             .await
             .unwrap();
 
-        let chal: ApiResponse<Challenge> = resp.json().await?;
+        let chal: ApiResponse<Challenge> = resp.json::<ApiResult<_>>().await?.result()?;
 
         if chal.success {
             Ok(chal.data)
@@ -159,6 +166,39 @@ impl Ctfd {
     pub async fn all_tasks(&self) -> Result<Vec<Task<i32>>, CtfdError> {
         let briefs = &self.get_challs().await?;
         self.tasks_from_briefs(&briefs).await
+    }
+
+    pub async fn submit_flag(
+        &self,
+        flag: String,
+        id: i32,
+        csrf_token: &str,
+    ) -> Result<SubmitResult, CtfdError> {
+        let url = self
+            .base_url
+            .join(&format!("api/v1/challenges/attempt"))
+            .unwrap();
+
+        let mut data: HashMap<String, String> = HashMap::new();
+        data.insert("challenge_id".to_string(), id.to_string());
+        data.insert("submission".to_string(), flag);
+
+        let resp = self
+            .client
+            .post(url)
+            .header("cookie", &self.session)
+            .header("CSRF-Token", csrf_token)
+            .json(&data)
+            .send()
+            .await?;
+
+        let result: ApiResponse<SubmitResult> = resp.json::<ApiResult<_>>().await?.result()?;
+
+        if result.success {
+            Ok(result.data)
+        } else {
+            panic!()
+        }
     }
 }
 
