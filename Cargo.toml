@@ -12,4 +12,5 @@ json = "0.12.4"
 reqwest = { version = "0.11.14", features = ["json", "cookies"] }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
+thiserror = "1.0.40"
 tokio = { version = "1.26.0", features = ["full"] }

@@ -1,8 +1,7 @@
 use std::fmt;
 
-use color_eyre::Report;
+use reqwest::Url;
 use reqwest::{self};
-use reqwest::{Error, Url};
 use serde::{de::DeserializeOwned, Deserialize};
 
 use crate::Task;
@@ -47,6 +46,14 @@ impl fmt::Display for ApiError {
 
 impl std::error::Error for ApiError {}
 
+#[derive(thiserror::Error, Debug)]
+pub enum CtfdError {
+    #[error("ApiError")]
+    ApiError(#[from] ApiError),
+    #[error("Reqwest")]
+    ReqwestError(#[from] reqwest::Error),
+}
+
 #[derive(Deserialize, Debug, Clone)]
 pub struct ChallengeBrief {
     pub name: String,
@@ -72,7 +79,7 @@ pub struct Challenge {
 }
 
 impl Ctfd {
-    pub async fn get_challs(&self) -> Result<Vec<ChallengeBrief>, Report> {
+    pub async fn get_challs(&self) -> Result<Vec<ChallengeBrief>, CtfdError> {
         let url = self.base_url.join("api/v1/challenges").unwrap();
 
         let resp = self
@@ -91,7 +98,7 @@ impl Ctfd {
         }
     }
 
-    pub async fn get_chall(&self, id: i32) -> Result<Challenge, Error> {
+    pub async fn get_chall(&self, id: i32) -> Result<Challenge, CtfdError> {
         let url = self
             .base_url
             .join(&format!("api/v1/challenges/{id}"))
@@ -114,7 +121,7 @@ impl Ctfd {
         }
     }
 
-    pub async fn all_tasks(&self) -> Result<Vec<Task<i32>>, Report> {
+    pub async fn all_tasks(&self) -> Result<Vec<Task<i32>>, CtfdError> {
         let chal_ids = self
             .get_challs()
             .await?
