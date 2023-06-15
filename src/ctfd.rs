@@ -116,4 +116,12 @@ impl Ctfd {
             session,
         }
     }
+
+    pub fn base_url(&self) -> &str {
+        &self.base_url[..]
+    }
+
+    pub fn client(&self) -> &reqwest::Client {
+        &self.client
+    }
 }
