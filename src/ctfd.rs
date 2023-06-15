@@ -1,8 +1,31 @@
+use std::fmt;
+
+use color_eyre::Report;
 use reqwest::{self};
 use reqwest::{Error, Url};
 use serde::{de::DeserializeOwned, Deserialize};
 
 use crate::Task;
+
+#[derive(Deserialize, Debug)]
+#[serde(untagged)]
+#[serde(bound = "D: DeserializeOwned")]
+enum ApiResult<D: DeserializeOwned> {
+    Ok(ApiResponse<D>),
+    Err(ApiError),
+}
+
+impl<D> ApiResult<D>
+where
+    for<'de> D: Deserialize<'de>,
+{
+    fn result(self) -> Result<ApiResponse<D>, ApiError> {
+        match self {
+            ApiResult::Ok(ok) => Ok(ok),
+            ApiResult::Err(err) => Err(err),
+        }
+    }
+}
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(bound = "D: DeserializeOwned")]
@@ -10,6 +33,19 @@ pub struct ApiResponse<D: DeserializeOwned> {
     pub success: bool,
     pub data: D,
 }
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct ApiError {
+    message: String,
+}
+
+impl fmt::Display for ApiError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, r#"Server returned message "{}""#, self.message)
+    }
+}
+
+impl std::error::Error for ApiError {}
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ChallengeBrief {
@@ -36,7 +72,7 @@ pub struct Challenge {
 }
 
 impl Ctfd {
-    pub async fn get_challs(&self) -> Result<Vec<ChallengeBrief>, Error> {
+    pub async fn get_challs(&self) -> Result<Vec<ChallengeBrief>, Report> {
         let url = self.base_url.join("api/v1/challenges").unwrap();
 
         let resp = self
@@ -44,10 +80,9 @@ impl Ctfd {
             .get(url)
             .header("cookie", &self.session)
             .send()
-            .await
-            .unwrap();
+            .await?;
 
-        let vec: ApiResponse<Vec<ChallengeBrief>> = resp.json().await?;
+        let vec: ApiResponse<Vec<ChallengeBrief>> = resp.json::<ApiResult<_>>().await?.result()?;
 
         if vec.success {
             Ok(vec.data)
@@ -79,7 +114,7 @@ impl Ctfd {
         }
     }
 
-    pub async fn all_tasks(&self) -> Result<Vec<Task<i32>>, Error> {
+    pub async fn all_tasks(&self) -> Result<Vec<Task<i32>>, Report> {
         let chal_ids = self
             .get_challs()
             .await?

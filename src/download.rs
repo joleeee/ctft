@@ -1,4 +1,4 @@
-use color_eyre::{eyre::eyre, eyre::Report};
+use color_eyre::eyre::Report;
 use std::io::Cursor;
 use std::path::PathBuf;
 
