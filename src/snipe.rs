@@ -145,6 +145,19 @@ impl Snipe {
             return Ok(());
         };
 
+        // check if the body target actually matches any titles
+        let body_title_matches = Self::find_title_matches(body_target, &challs).await?;
+        match body_title_matches.len() {
+            0 => {}
+            1 => {
+                self.submit(body_title_matches[0].id).await?;
+                return Ok(());
+            }
+            _ => {
+                return Err(eyre!("Found multiple matches {:?}", body_title_matches));
+            }
+        }
+
         // get bodies
         let full_challs = ctf.full_challs(&challs).await?;
 
