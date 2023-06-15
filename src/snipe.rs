@@ -1,21 +1,26 @@
-use crate::ctfd::{ChallengeBrief, Ctfd};
+use crate::ctfd::{Challenge, ChallengeBrief, Ctfd};
 use argh::FromArgs;
 use chrono::{DateTime, Utc};
-use color_eyre::Report;
+use color_eyre::{eyre, eyre::eyre, Report};
 
 #[derive(FromArgs, Debug)]
 #[argh(subcommand, name = "snipe", description = "snipe a challenge")]
 pub struct Snipe {
-    /// keyword
-    #[argh(positional)]
-    target: String,
-
-    #[argh(positional)]
+    #[argh(option, long = "flag")]
+    /// the flag to submit
     flag: String,
 
+    #[argh(option, long = "wait")]
     /// wait until this time
-    #[argh(positional)]
     wait_until: Option<chrono::DateTime<chrono::Utc>>,
+
+    /// text to look for in title
+    #[argh(positional, long = "title")]
+    title_target: String,
+
+    /// text to look for in the title and body
+    #[argh(positional, long = "body")]
+    body_target: Option<String>,
 }
 
 impl Snipe {
@@ -71,7 +76,46 @@ impl Snipe {
         }
     }
 
+    pub async fn find_title_matches(
+        title: &str,
+        challs: &[ChallengeBrief],
+    ) -> Result<Vec<ChallengeBrief>, Report> {
+        let title_search = title.to_lowercase();
+
+        let matching_title: Vec<_> = challs
+            .iter()
+            .filter(|c| c.name.clone().to_lowercase().contains(&title_search))
+            .cloned()
+            .collect();
+
+        Ok(matching_title)
+    }
+
+    pub async fn find_body_matches(
+        body: &str,
+        challs: &[Challenge],
+    ) -> Result<Vec<Challenge>, Report> {
+        let body_search = body.to_lowercase();
+
+        let matching_body: Vec<_> = challs
+            .iter()
+            .filter(|c| c.description.clone().to_lowercase().contains(&body_search))
+            .cloned()
+            .collect();
+
+        Ok(matching_body)
+    }
+
+    pub async fn submit(&self, id: i32) -> Result<(), Report> {
+        todo!();
+    }
+
     pub async fn run(&self, ctf: &Ctfd) -> Result<(), Report> {
+        println!(
+            "Main target '{}'. Secondary target '{:?}'",
+            self.title_target, self.body_target
+        );
+
         if let Some(until) = self.wait_until {
             self.wait(until).await?;
         } else {
@@ -81,7 +125,42 @@ impl Snipe {
         let challs = self.challs(ctf).await?;
         dbg!(&challs);
 
-        // first, find the challenge
-        todo!()
+        let title_matches = Self::find_title_matches(&self.title_target, &challs).await?;
+        match title_matches.len() {
+            0 => {}
+            1 => {
+                self.submit(title_matches[0].id).await?;
+                return Ok(());
+            }
+            _ => {
+                return Err(eyre!("Found multiple matches {:?}", title_matches));
+            }
+        }
+
+        let body_target = if let Some(body_target) = self.body_target.as_ref() {
+            body_target
+        } else {
+            // nothing else to try
+            println!("Didn't find any matches");
+            return Ok(());
+        };
+
+        // get bodies
+        let full_challs = ctf.full_challs(&challs).await?;
+
+        let body_matches = Self::find_body_matches(&body_target, &full_challs).await?;
+        match body_matches.len() {
+            0 => {}
+            1 => {
+                self.submit(body_matches[0].id).await?;
+                return Ok(());
+            }
+            _ => {
+                return Err(eyre!("Found multiple matches {:?}", body_matches));
+            }
+        }
+
+        println!("Didn't find any matches");
+        Ok(())
     }
 }

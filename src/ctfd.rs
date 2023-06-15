@@ -121,18 +121,33 @@ impl Ctfd {
         }
     }
 
-    pub async fn all_tasks(&self) -> Result<Vec<Task<i32>>, CtfdError> {
-        let chal_ids = self
-            .get_challs()
-            .await?
-            .iter()
-            .map(|v| v.id)
-            .collect::<Vec<_>>();
+    pub async fn full_challs(
+        &self,
+        briefs: &[ChallengeBrief],
+    ) -> Result<Vec<Challenge>, CtfdError> {
+        let chal_ids = briefs.iter().map(|v| v.id).collect::<Vec<_>>();
 
-        let mut tasks = Vec::new();
+        let mut challenges = Vec::new();
         for id in chal_ids {
             let chal = self.get_chall(id).await?;
             assert_eq!(id, chal.id);
+            challenges.push(chal);
+        }
+
+        Ok(challenges)
+    }
+
+    pub async fn tasks_from_briefs(
+        &self,
+        briefs: &[ChallengeBrief],
+    ) -> Result<Vec<Task<i32>>, CtfdError> {
+        let chal_ids = briefs.iter().map(|v| v.id).collect::<Vec<_>>();
+
+        let challenges = self.full_challs(briefs).await?;
+
+        let mut tasks = Vec::new();
+
+        for chal in challenges {
             tasks.push(Task {
                 _id: chal.id,
                 name: chal.name,
@@ -141,6 +156,11 @@ impl Ctfd {
         }
 
         Ok(tasks)
+    }
+
+    pub async fn all_tasks(&self) -> Result<Vec<Task<i32>>, CtfdError> {
+        let briefs = &self.get_challs().await?;
+        self.tasks_from_briefs(&briefs).await
     }
 }
 
