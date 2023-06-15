@@ -1,6 +1,7 @@
 use crate::ctfd::Ctfd;
 use argh::FromArgs;
-use reqwest::{self, Error};
+use color_eyre::Report;
+use reqwest::{self};
 
 #[derive(FromArgs, Debug)]
 #[argh(subcommand, name = "snipe", description = "snipe a challenge")]
@@ -14,7 +15,7 @@ pub struct Snipe {
 }
 
 impl Snipe {
-    pub async fn run(&self, ctf: &Ctfd) -> Result<(), Error> {
+    pub async fn run(&self, ctf: &Ctfd) -> Result<(), Report> {
         todo!()
     }
 }

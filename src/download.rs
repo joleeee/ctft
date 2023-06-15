@@ -1,11 +1,11 @@
+use color_eyre::{eyre::eyre, eyre::Report};
 use std::io::Cursor;
 use std::path::PathBuf;
 
 use crate::ctfd::Ctfd;
 use crate::read_line_lower;
 use argh::FromArgs;
-use reqwest::{self};
-use reqwest::{Error, Url};
+use reqwest::{self, Url};
 
 #[derive(FromArgs, Debug)]
 #[argh(subcommand, name = "download", description = "download all challenges")]
@@ -16,7 +16,7 @@ pub struct Download {
 }
 
 impl Download {
-    pub async fn run(&self, ctf: &Ctfd) -> Result<(), Error> {
+    pub async fn run(&self, ctf: &Ctfd) -> Result<(), Report> {
         let tasks = ctf.all_tasks().await?;
 
         // make sure path exists

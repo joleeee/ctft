@@ -1,10 +1,7 @@
-use std::io::Cursor;
-use std::path::PathBuf;
-
 use argh::FromArgs;
+use color_eyre::eyre::Report;
 use ctfd::Ctfd;
-use reqwest::{self};
-use reqwest::{Error, Url};
+use reqwest::{self, Url};
 
 pub mod ctfd;
 mod download;
@@ -35,7 +32,7 @@ enum Command {
 }
 
 impl Command {
-    async fn run(&self, ctf: &Ctfd) -> Result<(), Error> {
+    async fn run(&self, ctf: &Ctfd) -> Result<(), Report> {
         match self {
             Command::Download(d) => d.run(ctf).await,
             Command::Snipe(s) => s.run(ctf).await,
@@ -63,7 +60,9 @@ pub fn read_line_lower() -> String {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn main() -> Result<(), Report> {
+    color_eyre::install()?;
+
     let Args { url, session, cmd } = argh::from_env();
 
     // make sure we have a trailling slash, otherwise path is ignored: /asdf/blah + /endpoint => /endpoint
